@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Food Stamp Calculator</title>
+
+<style type="text/css">
+
+	h1 {
+		color: red;
+		font-family: sans-serif;
+		font-size: large;
+	}
+
+	input {
+		width: 4em;
+		}
+
+		table {
+		border: solid;
+		alignment-adjust: center;
+	}
+
+	
+	
+
+	
+</style>
+
+
+<script>
+
+var AGMemberDisabled = false;
+var agSize;
+var categoricalEligibility = false;
+var childSupport = 0;
+var clientName;
+var dependentCare = 0;
+var earnedIncome = 0;
+var earnedIncomeDeduction = 0;
+var farmIncome=0;
+var farmLoss = 0;
+var foodStamps = 0;
+var grossIncome = 0;
+var grossIncomeLimit = 0;
+var householdSize;
+var ineligibleAliens;
+var ineligibleStudents;
+var maximumAllotment = 0;
+var maximumIncome = 0;
+var medical = 0;
+var medicalInput = 0;
+var netIncome = 0;
+var netIncomeBeforeShelter = 0;
+var netIncomeResult;
+var netStandard = 0;
+var newWindow;
+var owfSanctions = 0;
+var passGrossIncome = false;
+var passNetIncome = false;
+var propertyInsurance = 0;
+var rent = 0;
+var selfEmployment = 0;
+var shelterCosts = 0;
+var shelterCostsActual = 0;
+var shelterCostsInput = 0;
+var shelterCostsTotal = 0;
+var standardDeduction = 0;
+var taxes=0;
+var unearnedIncome = 0;
+var utilityAllowance = 0;
+
+// the following are temporary variables used in calculating the utility allowance
+var i = 0; // homeless amount
+var j = 0; // phone
+var k = 0; // heating
+var l = 0; // electric gas and oil nonheating
+var m = 0; // water
+var n = 0; // garbage
+var o = 0; // totalling amounts
+
+// the following are constants from the standard help sheet
+var arrStandardDeduction = [155, 155, 155, 165, 193, 221, 221, 221, 221, 221, 221, 221];
+var arrMaximumAllotment = [194, 357, 511, 649, 771, 925, 1022, 1169, 1315, 1461, 1607, 1753];
+var arrNetStandard = [973, 1311, 1650, 1988, 2326, 2665, 3003, 3341, 3680, 4019, 4358, 4697];
+var arrGrossIncomeLimit = [1265, 1705, 2144, 2584, 3024, 3464, 3904, 4344, 4784, 5224, 5664, 6104];
+var arr200Poverty = [1945, 2622, 3299, 3975, 4652, 5329, 6005, 6682, 7359, 8035, 8712, 9389];
+var arr165Poverty = [1605, 2163, 2722, 3280, 3838, 4396, 4955, 5513, 6072, 6631, 7190, 7749];
+var HOMELESS_AMOUNT = 143;
+var PHONE = 39;
+var LIMITED_UTILITY = 330;
+var STANDARD_UTILITY = 498;
+var SINGLE_UTILITY = 73;
+var LIMIT_ON_SHELTER_DEDUCTION = 490;
+var MEDICAL_DEDUCTION = 35;
+var EARNED_INCOME_DEDUCTION = 0.2;
+var MINIMUM_ALLOTMENT = 16;
+
+function getId(id) {
+    return document.getElementById(id);
+}
+
+function Load() {
+// default date in date field
+	var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth()+1; //January is 0!
+    var yyyy = today.getFullYear();
+    if(dd<10){
+		dd='0'+dd
+		} 
+	if(mm<10){
+		mm='0'+mm
+		} 
+	var today = mm+'/'+dd+'/'+yyyy;
+	getId("Date").value = today;
+}
+
+function Save() {
+
+clientName = getId("ClientName").value;
+
+// calculate AG Size
+DetermineAGSize()
+
+// make sure numbers are inputted and save to variables	
+	if (isNaN(getId("EarnedIncome").value)) {
+        alert ("Earned income must be a number");
+        earnedIncome=0;
+        getId("EarnedIncome").value = 0;
+        getId("EarnedIncome").focus();
+        getId("EarnedIncome").select();
+    }
+    else {
+        earnedIncome = Math.floor(parseInt(getId("EarnedIncome").value));
+    }
+    
+    if (isNaN(getId("UnearnedIncome").value)) {
+        alert ("Unearned income must be a number!");
+        unearnedIncome=0;
+        getId("UnearnedIncome").value=0;
+        getId("UnearnedIncome").focus();
+        getId("UnearnedIncome").select();
+    }
+    else {
+        unearnedIncome = Math.floor(parseInt(getId("UnearnedIncome").value));
+    }
+    
+    if (isNaN(getId("SelfEmployment").value)) {
+        alert ("Gross self-employment income must be a number!");
+        selfEmployment=0;
+        getId("SelfEmployment").value=0;
+        getId("SelfEmployment").focus();
+        getId("SelfEmployment").select();
+    }
+    else {
+        selfEmployment = Math.floor(parseInt(getId("SelfEmployment").value));
+    }
+    
+    if (isNaN(getId("FarmIncome").value)) {
+        alert ("Farm income must be a number");
+        farmIncome=0;
+        getId("farmIncome").value = 0;
+        getId("farmIncome").focus();
+        getId("farmIncome").select();
+    }
+    else {
+        farmIncome = Math.floor(parseInt(getId("FarmIncome").value));
+    }
+    
+    if (isNaN(getId("Rent").value)) {
+        alert ("Rent or mortgage payments must be a number");
+        rent=0;
+        getId("Rent").value = 0;
+        getId("Rent").focus();
+        getId("Rent").select();
+    }
+    else {
+        rent = Math.floor(parseInt(getId("Rent").value));
+    }
+    
+    if (isNaN(getId("Taxes").value)) {
+        alert ("Real property tax payments must be a number");
+        taxes=0;
+        getId("Taxes").value = 0;
+        getId("Taxes").focus();
+        getId("Taxes").select();
+    }
+    else {
+        taxes = Math.floor(parseInt(getId("Taxes").value));
+    }
+    
+        if (isNaN(getId("PropertyInsurance").value)) {
+        alert ("Property insurance payments must be a number");
+        propertyInsurance=0;
+        getId("PropertyInsurance").value = 0;
+        getId("PropertyInsurance").focus();
+        getId("PropertyInsurance").select();
+    }
+    else {
+        propertyInsurance = Math.floor(parseInt(getId("PropertyInsurance").value));
+    }
+    
+    if ((getId("Homeless").checked)) {
+        if (rent > 0 || propertyInsurance > 0 || taxes > 0) {
+            alert ("You can't claim the homeless deduction as well as shelter expenses! OAC 5101:4-4-23(H).");
+        }
+        
+    }
+
+switch (getId("IsAGMemberDisabled").value) {
+	case "yes":
+		AGMemberDisabled = true;
+		break;
+	case "no":
+		AGMemberDisabled = false;
+		break
+	}
+ if (!AGMemberDisabled) {
+		getId("Medical").disabled=true;
+	}
+	else {
+		getId("Medical").disabled=false;
+	}
+	
+switch (getId("CategoricalEligibility").value) {
+	case "yes":
+		categoricalEligibility = true;
+		break;
+	case "no":
+		categoricalEligibility = false;
+		break
+	}
+	
+	if (isNaN(getId("DependentCare").value)) {
+		alert ("Dependent Care must be a number");
+		dependentCare=0;
+		getId("DependentCare").value=0;
+		getId("DependentCare").focus();
+		getId("DependentCare").select();
+		}
+	else {
+			dependentCare = Math.floor(parseInt(getId("DependentCare").value));
+	}
+
+	if (isNaN(getId("FarmLoss").value)) {
+		alert ("Farm Loss must be a number");
+		farmLoss = 0;
+		getId("FarmLoss").value=0;
+		getId("FarmLoss").focus();
+		getId("FarmLoss").select();
+		}	
+	else {
+		farmLoss = Math.floor(parseInt(getId("FarmLoss").value));
+	}
+	
+	if (isNaN(getId("ChildSupport").value)) {
+		alert ("Child Support must be a number");
+		childSupport = 0;
+		getId("ChildSupport").value=0;
+		getId("ChildSupport").focus();
+		getId("ChildSupport").select();
+		}	
+	else {
+		childSupport = Math.floor(parseInt(getId("ChildSupport").value));
+	}
+	
+	if (isNaN(getId("Medical").value) || getId("Medical").value < 35) {
+	medicalInput = Math.floor(parseInt(getId("Medical").value))
+	medical = 0;
+	}
+	else {
+		medicalInput = Math.floor(parseInt(getId("Medical").value))
+		medical = medicalInput - MEDICAL_DEDUCTION
+		}
+		
+// adjust the utility checkboxes and assign variables
+	
+	if ((getId("Homeless").checked)) {
+		i = 1;
+		getId("Phone").disabled = true;
+		getId("Heating").disabled = true;
+		getId("Electric").disabled = true;
+		getId("Garbage").disabled = true;
+		getId("Water").disabled = true;
+		}
+		else {
+		i=0;
+		getId("Phone").disabled = false;
+		getId("Heating").disabled = false;
+		getId("Electric").disabled = false;
+		getId("Garbage").disabled = false;
+		getId("Water").disabled = false;
+		}
+	
+	if ((getId("Phone").checked)) {
+		j = 2;
+		}
+		else {
+		j=0;
+		}
+	
+	if ((getId("Heating").checked)) {
+		k=4;
+		}
+		else {
+		k=0;
+		}
+	
+	if ((getId("Electric").checked)) {
+		l=8;
+		}
+		else {
+		l=0;}
+	
+	if ((getId("Water").checked)) {
+		m=8;
+		}
+		else {
+		m=0;
+		}
+	
+	if ((getId("Garbage").checked)) {
+		n=8;
+		}
+		else {
+		n=0;
+		}
+	
+	if ((getId("Phone").checked) || (getId("Heating").checked) || (getId("Electric").checked) || (getId("Water").checked) || (getId("Garbage").checked) ) {
+		getId("Homeless").disabled = true;
+		}
+		else {
+		getId("Homeless").disabled = false;
+		}
+	
+	// report utility allowance
+	DetermineUtitlityAllowance();
+	
+	// identify values from the arrays based upon AG Size
+	standardDeduction = arrStandardDeduction[agSize-1];
+	netStandard = arrNetStandard[agSize-1];
+	grossIncomeLimit = arrGrossIncomeLimit[agSize-1];
+	maximumAllotment = arrMaximumAllotment[agSize-1];
+	
+	// evaluate gross income against maximum allowed OAC 5101:4-4-31(Q) and report result
+	GrossIncomeTest()
+	
+	// calculate deductions and determine final net income for test	
+	CalculateNetIncomeAndDeductions()
+	
+	//determine whether net income test is passed and show results
+	NetIncomeTest();
+	
+	// show amount of food stamps
+	CalculateFoodStampAmount();
+	
+}
+
+function DetermineAGSize() {
+
+
+if (isNaN(getId("HouseholdSize").value) || getId("HouseholdSize").value == 0) {
+	alert("The number of people buying and eating meals together must be a number and bigger than 0!");
+	householdSize = 1;
+	getId("HouseholdSize").value=1;
+	getId("HouseholdSize").focus();
+	getId("HouseholdSize").select();
+	}
+	else {
+	householdSize = parseInt(getId("HouseholdSize").value);
+	}
+
+if (isNaN(getId("OWFSanctions").value)) {
+	alert("The number of people serving a sanction must be a number!");
+	owfSanctions = 0;
+	getId("OWFSanctions").value=0;
+	getId("OWFSanctions").focus();
+	getId("OWFSanctions").select();
+	}
+	else {
+	owfSanctions = parseInt(document.getElementById("OWFSanctions").value);
+	}
+	
+if (isNaN(getId("IneligibleAliens").value)) {
+	alert("The number of ineligible aliens must be a number!");
+	ineligibleAliens = 0;
+	getId("IneligibleAliens").value=0;
+	getId("IneligibleAliens").focus();
+	getId("IneligibleAliens").select();
+	}
+	else {
+	ineligibleAliens = parseInt(getId("IneligibleAliens").value);
+	}	
+
+if (isNaN(getId("IneligibleStudents").value)) {
+	alert("The number of ineligible students must be a number!");
+	ineligibleStudents = 0;
+	getId("IneligibleStudents").value=0;
+	getId("IneligibleStudents").focus();
+	getId("IneligibleStudents").select();
+	}
+	else {
+	ineligibleStudents = parseInt(getId("IneligibleStudents").value);
+	}
+
+agSize = householdSize - owfSanctions - ineligibleAliens - ineligibleStudents
+
+if (agSize < 0) {
+	agSize = 0;
+	}
+
+}
+
+function GrossIncomeTest() {
+
+	// evaluate gross income against maximum allowed OAC 5101:4-4-31(Q) and report result
+	grossIncome = earnedIncome + selfEmployment + farmIncome + unearnedIncome - farmLoss;
+	if (grossIncome >= grossIncomeLimit && !AGMemberDisabled && !categoricalEligibility) {
+		// this is if the gross income is failed
+		getId("GrossIncomePass").innerHTML= "The gross income test is FAILED ";
+		getId("GrossIncomeReason").innerHTML="because the gross income of $" + grossIncome + " exceeds the gross income limit of $" + grossIncomeLimit + ".";
+		passGrossIncome = false;
+		}
+		else {
+			// this is if the gross income is passed
+			getId("GrossIncomePass").innerHTML = "The gross income test is PASSED ";
+			passGrossIncome = true;
+			if (!AGMemberDisabled && !categoricalEligibility) {
+				// passed on income
+				getId("GrossIncomeReason").innerHTML = "because the gross income of $" + grossIncome + " is less than the gross income limit of $" + grossIncomeLimit + ".";
+				}
+			if (AGMemberDisabled) {
+				getId("GrossIncomeReason").innerHTML = "because there is an elderly or disabled person in the assistance group.";
+				}
+			if (categoricalEligibility) {
+				getId("GrossIncomeReason").innerHTML = "because someone in the assistance group is getting DFA, OWF, PRC, or SSI.";
+				}
+		}
+	if (AGMemberDisabled && grossIncome < arr200Poverty[agSize-1]) categoricalEligibility = true;	
+
+}
+
+function DetermineUtitlityAllowance() {
+
+	// determine variable total from utility allowance
+	o = i+j+k+l+m+n
+	
+	// determine amount of utility allowance
+	switch (o) {
+		
+		case 0: 
+			utilityAllowance = 0;
+			break;
+		case 1:
+			utilityAllowance = HOMELESS_AMOUNT;
+			break;
+		case 2:
+			utilityAllowance = PHONE;
+			break;
+		case 4:
+		case 6:
+		case 12:
+		case 14:
+		case 20:
+		case 22:
+		case 28:
+		case 30:
+			utilityAllowance = STANDARD_UTILITY;
+			break;
+		case 8:
+			utilityAllowance = SINGLE_UTILITY;
+			break;
+		default:
+			utilityAllowance = LIMITED_UTILITY;
+			break;
+	}
+	
+	// report utility allowance
+	getId("UtilityAllowance").innerHTML = utilityAllowance;
+
+}
+
+function CalculateNetIncomeAndDeductions() {
+
+// determine net income before taking out shelter costs
+	earnedIncomeDeduction = Math.floor((earnedIncome + selfEmployment + farmIncome)*EARNED_INCOME_DEDUCTION);
+	netIncomeBeforeShelter = earnedIncome + selfEmployment + farmIncome - earnedIncomeDeduction + unearnedIncome;
+	netIncomeBeforeShelter = netIncomeBeforeShelter - dependentCare - medical - standardDeduction - childSupport;
+	if (netIncomeBeforeShelter<0) {netIncomeBeforeShelter=0}
+
+	// display countable deductions
+	getId("CountableMedical").innerHTML = medical;
+	
+	// determine excess shelter deduction
+	shelterCostsInput = rent + taxes + propertyInsurance;
+	shelterCostsTotal = utilityAllowance + shelterCostsInput;
+	shelterCosts = Math.floor(shelterCostsTotal - (netIncomeBeforeShelter/2));
+	shelterCostsActual = shelterCosts
+	
+	if (shelterCosts < 0) {
+		shelterCosts = 0;
+		shelterCostsActual = 0
+		}
+	
+	if (!AGMemberDisabled && shelterCosts > LIMIT_ON_SHELTER_DEDUCTION) {
+		shelterCosts = LIMIT_ON_SHELTER_DEDUCTION;
+		}
+	
+	getId("ExcessShelter").innerHTML = shelterCosts;
+	
+	// determine final net income for test	
+	netIncome = netIncomeBeforeShelter - shelterCosts
+
+}
+
+function NetIncomeTest() {
+
+if (netIncome < 0) {
+		netIncome = 0;
+}
+	
+if (netIncome > netStandard && !categoricalEligibility) {
+	getId("NetIncomePass").innerHTML = "The net income test is FAILED "
+	getId("NetIncomeReason").innerHTML = "Bescause the net income of $" + netIncome + " exceeds the net income maximum of $" + netStandard + ".";
+	passNetIncome=false;
+} else if (categoricalEligibility) {
+	getId("NetIncomePass").innerHTML = "The net income test is PASSED "
+	getId("NetIncomeReason").innerHTML = "because the assistance group is categorically eligible";
+	passNetIncome=true;
+} else {
+	getId("NetIncomePass").innerHTML = "The net income test is PASSED "
+	getId("NetIncomeReason").innerHTML = "Bescause the net income of $" + netIncome + " is less than the net income maximum of $" + netStandard + ".";
+	passNetIncome=true;
+}
+	
+if (passNetIncome) {
+	netIncomeResult = "PASSED"
+} else {netIncomeResult = "FAILED"
+}
+
+}
+
+function CalculateFoodStampAmount() {
+// OAC 5101:4-4-27
+if (!passGrossIncome || !passNetIncome){
+		getId("FoodStampPass").innerHTML="Client is not entitled to food stamps ";
+		getId("FoodStampReason").innerHTML="because the gross or net income test failed";
+} else {
+	foodStamps = maximumAllotment - Math.ceil(netIncome*.3);
+	if (foodStamps < MINIMUM_ALLOTMENT && agSize < 3){
+		foodStamps = MINIMUM_ALLOTMENT;
+	}
+	if (foodStamps < 0) foodStamps = 0;
+	getId("FoodStampPass").innerHTML="Client is entitled to food stamps ";
+	getId("FoodStampReason").innerHTML="in the amount of $" + foodStamps + " per month.";
+}
+
+}
+
+function CreateAEBFNScreen() {
+			var newContent;
+            newwindow = window.open();
+            newContent = "<html><head><title>AEBFN - Net Income Budget</title></head><body><table><tr><td>AEBFN</td><td>FOOD STAMP NET INCOME BUDGET</td></tr><tr><td>Case:</td><td> </td>";
+			newContent += "</tr><tr><td>AG NAME:</td><td>" + clientName + "</td></tr></table><table><tr>";
+			newContent += "<td>TOTAL EARNED INCOME:</td><td></td><td style='BORDER-BOTTOM: 1px solid'>" + earnedIncome + "</td><td>.00</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td></td></tr>";
+			newContent += "<tr><td>TOTAL UNEARNED INCOME:</td><td>+</td><td style='BORDER-BOTTOM: 1px solid'>" + unearnedIncome + "</td><td>.00</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td></td></tr>";
+			newContent += "<tr><td>FARM LOSS:</td><td>-</td><td style='BORDER-BOTTOM: 1px solid'>" + farmLoss + "</td><td>.00</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td></td></tr>";
+			newContent += "<tr><td>TOTAL GROSS INCOME:</td><td>=</td><td style='BORDER-BOTTOM: 1px solid'>" + grossIncome + "</td><td>.00</td><td></td><td>TOTAL GROSS INCOME:</td><td></td><td style='BORDER-BOTTOM: 1px solid'>" + grossIncome + "</td><td>.00</td></tr>";
+			newContent += "<tr><td></td><td></td><td></td><td></td><td></td><td>EARNED INCOME DEDUCTION:</td><td>-</td><td style='BORDER-BOTTOM: 1px solid'>" + earnedIncomeDeduction + "</td><td>.00</td></tr>";
+			newContent += "<tr><td>TOTAL MEDICAL COSTS:</td><td></td><td style='BORDER-BOTTOM: 1px solid'>" + medicalInput + "</td><td>.00</td><td></td><td>STANDARD DEDUCTION:</td><td>-</td><td style='BORDER-BOTTOM: 1px solid'>" + standardDeduction + "</td><td>.00</td></tr>";
+			newContent += "<tr><td>MEDICAL DEDUCTION:</td><td>-</td><td style='BORDER-BOTTOM: 1px solid'>" + MEDICAL_DEDUCTION + "</td><td>.00</td><td></td><td></td><td></td><td></td><td></td></tr>";			
+			newContent += "<tr><td>EXCESS MEDICAL EXPENSES:</td><td>=</td><td style='BORDER-BOTTOM: 1px solid'>" + medical + "</td><td>.00</td><td></td><td>EXCESS MEDICAL EXPENSES:</td><td>-</td><td style='BORDER-BOTTOM: 1px solid'>" + medical + "</td><td>.00</td></tr>";			
+			newContent += "<tr><td></td><td></td><td></td><td></td><td></td><td>DEPENDENT CARE DEDUCTION:</td><td>-</td><td style='BORDER-BOTTOM: 1px solid'>" + dependentCare + "</td><td>.00</td></tr>";
+			newContent += "<tr><td>SHELTER COSTS:</td><td></td><td style='BORDER-BOTTOM: 1px solid'>" + shelterCostsInput + "</td><td>.00</td><td></td><td>CHILD SUPPORT DEDUCTION:</td><td>-</td><td style='BORDER-BOTTOM: 1px solid'>" + childSupport + "</td><td>.00</td></tr>";			
+			newContent += "<tr><td>UTILITY ALLOWANCE:</td><td>+</td><td style='BORDER-BOTTOM: 1px solid'>" + utilityAllowance + "</td><td>.00</td><td></td><td>ADJUSTED INCOME:</td><td>=</td><td style='BORDER-BOTTOM: 1px solid'>" + netIncomeBeforeShelter + "</td><td>.00</td></tr>";			
+			newContent += "<td>SHELTER COSTS/UTILITY COSTS:</td><td>=</td><td style='BORDER-BOTTOM: 1px solid'>" + shelterCostsTotal + "</td><td>.00</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td></td></tr>";
+			newContent += "<td>50% ADJUSTED INCOME:</td><td>-</td><td style='BORDER-BOTTOM: 1px solid'>" + Math.floor(netIncomeBeforeShelter/2) + "</td><td>.00</td><td></td><td>SHELTER DEDUCTION:</td><td>-</td><td style='BORDER-BOTTOM: 1px solid'>" + shelterCosts + "</td><td>.00</td></tr>";
+			newContent += "<tr><td>EXCESS SHELTER/UTILITY COSTS:</td><td>=</td><td style='BORDER-BOTTOM: 1px solid'>" + shelterCostsActual + "</td><td>.00</td><td></td><td>NET ADJUSTED INCOME:</td><td>=</td><td style='BORDER-BOTTOM: 1px solid'>" + netIncome + "</td><td>.00</td></tr>";	
+			newContent += "<tr><td></td><td></td><td></td><td></td><td></td><td>MAX NET MONTHLY INCOME:</td><td></td><td style='BORDER-BOTTOM: 1px solid'>" + netStandard + "</td><td>.00</td></tr></table>";
+			newContent += "<p>ASSISTANCE GROUP SIZE: <span style='text-decoration: underline'>" + agSize + "</span></p>";
+			newContent += "<p>ASSISTANCE GROUP HAS <span style='text-decoration: underline'>" + netIncomeResult + "</span>  THE FOOD STAMP NET INCOME BUDGET</p>";
+			newContent += "</body></html>"
+			newwindow.document.write(newContent);
+			newwindow.document.close();
+        
+    }
+
+
+
+
+</script>
+
+</head>
+
+
+<body onload="Load()">
+
+<h1>FOOD STAMP CALCULATOR</h1>
+<h1>Current as of November 2014</h1><br>
+
+<table>
+	<tr>
+		<td>Client's Name:</td>
+		<td> <input type="text" id="ClientName" style="width: 13em"></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+		<td>Date:</td>
+		<td> <input type="text" id="Date"style="width: 6em"></td>
+	</tr>
+</table>
+
+<p style="font-weight: bold">HOUSEHOLD COMPOSITION</p>
+
+<table>
+	<tr>
+		<td>Number of people buying and eating meals together:</td>
+		<td><input id="HouseholdSize" onchange="Save();" value = 1></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+		<td>Ineligible students in household:</td>
+		<td><input id="IneligibleStudents" value=0 onchange="Save();"></td>
+	</tr>
+	
+	<tr>
+		<td>Number of people under OWF Sanction:</td>
+		<td><input id="OWFSanctions" value=0 onchange="Save();"></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+		<td>Are any AG members disabled or elderly?</td>
+		<td><select id="IsAGMemberDisabled" onchange="Save();">
+			<option value="no">No</option>
+			<option value="yes">Yes</option>
+			</select>
+		</td>
+	</tr>
+	
+	<tr>
+		<td>Ineligible aliens in household:</td>
+		<td><input id="IneligibleAliens" value=0 onchange="Save();"></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+		<td>Do any AG members get DFA, OWF, PRC, SSI?</td>
+		<td><select id="CategoricalEligibility" onchange="Save();">
+			<option value="no">No</option>
+			<option value="yes">Yes</option>
+			</select>
+		</td>
+	</tr>
+</table>
+
+<p style="font-weight: bold">INCOME</p>
+    
+    <table style="border: solid">
+        <tr>
+            <td><a href="http://codes.ohio.gov/oac/5101:4-4-19" target="_blank">Earned Income:</a></td>
+            <td><input id="EarnedIncome" value=0 onchange="Save();"></td>
+			<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			<td>Gross Self-Employment:</td>
+            <td><input id="SelfEmployment" value =0 onchange="Save();"></td>
+        </tr>
+        <tr>
+            <td><a href="http://codes.ohio.gov/oac/5101:4-4-19" target="_blank">Unearned Income:</a></td>
+            <td><input id="UnearnedIncome" value=0 onchange="Save();"></td>
+			<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			<td>Farm Income:</td>
+            <td><input id="FarmIncome" value =0 onchange="Save();"></td>
+        </tr>
+    </table>
+    
+    <p style="font-weight: bold">EXPENSES</p>
+    <table style="border: solid">
+        <tr>
+            <td><a href="http://codes.ohio.gov/oac/5101%3A4-4-23" target="_blank">Rent/Mortgage:</a></td>
+            <td><input id="Rent" value=0 onchange="Save();"></td>
+			<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			<td>Dependent Care:</td>
+			<td><input id="DependentCare" value=0 onchange="Save();"></td>
+        </tr>
+        <tr>
+            <td>Property Taxes:</td>
+            <td><input id="Taxes" value =0 onchange="Save();"></td>
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			<td>Farm Loss:</td>
+			<td><input id="FarmLoss" value=0 onchange="Save();"></td>
+        </tr>
+        <tr>
+            <td>Property Insurance:</td>
+            <td><input id="PropertyInsurance" value=0 onchange="Save();"></td>
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			<td>Child Support for Non-AG Member:</td>
+			<td><input id="ChildSupport" value=0 onchange="Save();"></td>
+        </tr>
+		<tr>
+			<td>Medical Expenses</td>
+			<td><input id="Medical" value = "0" onchange="Save();" disabled=true></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+    </table>
+    
+    <p style="font-weight: bold">UTILITIES: CHECK THOSE THAT APPLY</p>
+    
+    <table>
+        <tr>
+            <td>Client is homeless</td>
+            <td><input type="checkbox" id="Homeless" onchange="Save();"></td>
+            <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+            <td>Heating or cooling costs</td>
+            <td><input type="checkbox" id="Heating" onchange="Save();"></td>
+			<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			<td>Electric/Gas/Oil (non heating)</td>
+            <td><input type="checkbox" id="Electric" onchange="Save();"></td>
+        </tr>
+        <tr>
+        
+            <td>Water and Sewer</td>
+            <td><input type="checkbox" id="Water" onchange="Save();"></td>
+			<td>        </td>
+            <td>Garbage/Trash</td>
+            <td><input type="checkbox" id="Garbage" onchange="Save();"></td>
+            <td> </td>
+            <td>Phone</td>
+            <td><input type="checkbox" id="Phone" onchange="Save();"></td>
+        </tr>
+		<tr>
+			<td colspan="8">Client's utility or homeless allowance is: $<span id="UtilityAllowance">0</span></td>
+			<td></td>
+			<td></td>
+		</tr>
+	
+    </table>
+
+	<input type="button" onclick="Save();" value="Calculate Food Stamps" style="width:20em"><input type="button" style="width:15em" value="Clear all fields" onClick="location.reload(true)">
+	<br>
+	<input type="button" value="AEBFN" onclick="CreateAEBFNScreen();" style="width:7em" />
+	
+    <p><span id="FoodStampPass"></span><span id="FoodStampReason"></span></p>
+	<p><span id="GrossIncomePass"></span><span id="GrossIncomeReason"></span></p>
+	<p><span id="NetIncomePass"></span><span id="NetIncomeReason"</span></p>
+	<p>Countable Medical Expenses: $<span id="CountableMedical">0</span></p>
+	<p>Countable Excess Shelter Costs: $<span id="ExcessShelter">0</span></p>
+
+
+
+</body>
+</html>
